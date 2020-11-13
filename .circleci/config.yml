@@ -52,9 +52,37 @@ jobs:
       - run:
           name: Writing build version
           command: 
-              export __BUILD_VERSION="$(cat version.txt)"      
+              export __BUILD_VERSION="$(cat version.txt)"  
+      - run:
+          name: Compress artifacts
+          command: |
+            touch artifact.tar
+            tar --exclude='./.git' --exclude=artifact.tar -cvzf artifact.tar .
       - store_artifacts:
-          path: .
+          path: artifact.tar
+      - persist_to_workspace:
+          root: .
+          paths:
+            - artifact.tar
+
+  deploy:
+    docker:      
+      - image: cimg/node:14.15.0
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASSWORD
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install awscli 
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+      - run:
+          name: Deploy to S3
+          command: aws s3 cp artifact.tar s3://deploymentbucketappcues/artifacts/
 
 workflows:
   version: 2
@@ -67,3 +95,6 @@ workflows:
       - packaging:
           requires:
             - test
+      - deploy:
+          requires:
+            - packaging
