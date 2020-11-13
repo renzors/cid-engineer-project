@@ -1,0 +1,14 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /var/www/nodeApp
+hooks:
+  BeforeInstall:
+    - location: appspec/codedeploy/cleanup.sh
+      timeout: 180
+      runas: root
+  AfterInstall:
+    - location: appspec/codedeploy/runApp.sh
+      timeout: 180
+      runas: root
