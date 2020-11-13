@@ -1,0 +1,52 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@4.1.0
+
+jobs:
+  build:    
+    executor: 
+      name: node/default
+      tag: '14.15.0'
+      # Using a fixed node version (latest LTS) to avoid future upgrade issues
+    steps:
+      - run: node --version 
+      - checkout
+      - node/install-npm:
+          version: 7.0.10
+      # Using a fixed npm version to avoid future upgrade issues
+      - run: npm --version
+      - node/install-packages:
+          cache-path: node_modules
+          override-ci-command: npm i      
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+      # Save workspace for subsequent job
+
+  test:
+    docker:      
+      - image: cimg/node:14.15.0
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASSWORD
+      # Using the same node version as the previous job
+    steps:
+      # Reuse the workspace from the build job
+      - attach_workspace:
+          at: .
+      - run:
+          name: Test
+          command: npm run test      
+      - store_artifacts:
+          path: .
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
