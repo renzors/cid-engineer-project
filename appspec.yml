@@ -5,10 +5,10 @@ files:
     destination: /var/www/nodeApp
 hooks:
   BeforeInstall:
-    - location: appspec/codedeploy/cleanup.sh
+    - location: codedeploy/cleanup.sh
       timeout: 180
       runas: root
   AfterInstall:
-    - location: appspec/codedeploy/runApp.sh
+    - location: codedeploy/runApp.sh
       timeout: 180
       runas: root
